@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import BarMini from "@/components/BarMini";
 import { requireHr } from "@/lib/session";
 import { getLeaderboard } from "@/lib/leaderboard";
 import { createClient } from "@/lib/supabase/server";
+
+export const metadata: Metadata = { title: "Admin" };
 
 const quickActions: [string, string, string?][] = [
   ["👥", "Manage Employees", "/admin/employees"],

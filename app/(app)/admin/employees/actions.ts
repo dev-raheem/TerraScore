@@ -110,3 +110,76 @@ export async function rejectEmployee(formData: FormData): Promise<SimpleActionSt
 
   revalidatePath("/admin/employees");
 }
+
+export async function updateEmployee(_prevState: SimpleActionState, formData: FormData): Promise<SimpleActionState> {
+  try {
+    await assertHr();
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Not authorized." };
+  }
+
+  const id = String(formData.get("id") || "");
+  if (!id) return { error: "Missing employee." };
+
+  const fullName = String(formData.get("full_name") || "").trim();
+  const email = String(formData.get("email") || "").trim().toLowerCase();
+  const employeeCode = String(formData.get("employee_code") || "").trim() || null;
+  const department = String(formData.get("department") || "").trim() || null;
+  const designation = String(formData.get("designation") || "").trim() || null;
+  const phone = String(formData.get("phone") || "").trim() || null;
+  const reportingManager = String(formData.get("reporting_manager") || "").trim() || null;
+  const joiningDate = String(formData.get("joining_date") || "").trim() || null;
+  const role = String(formData.get("role") || "employee");
+
+  if (!fullName || !email) {
+    return { error: "Name and email are required." };
+  }
+  if (role !== "hr" && role !== "employee") {
+    return { error: "Invalid role." };
+  }
+
+  const admin = createAdminClient();
+
+  const { error } = await admin
+    .from("ts_employees")
+    .update({
+      full_name: fullName,
+      email,
+      employee_code: employeeCode,
+      department,
+      designation,
+      phone,
+      reporting_manager: reportingManager,
+      joining_date: joiningDate,
+      role,
+    })
+    .eq("id", id);
+
+  if (error) return { error: error.message };
+
+  const { error: authError } = await admin.auth.admin.updateUserById(id, { email });
+  if (authError) return { error: `Saved, but failed to update login email: ${authError.message}` };
+
+  revalidatePath("/admin/employees");
+  revalidatePath(`/admin/employees/${id}`);
+}
+
+export async function removeEmployee(formData: FormData): Promise<SimpleActionState> {
+  let hrId: string;
+  try {
+    hrId = await assertHr();
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Not authorized." };
+  }
+
+  const id = String(formData.get("id") || "");
+  if (!id) return { error: "Missing employee." };
+
+  if (id === hrId) return { error: "You can't remove your own account." };
+
+  const admin = createAdminClient();
+  const { error } = await admin.auth.admin.deleteUser(id);
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin/employees");
+}

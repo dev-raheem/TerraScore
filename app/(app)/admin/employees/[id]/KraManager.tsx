@@ -1,9 +1,70 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
-import { addKra, deleteKra, type ActionState } from "./actions";
+import { useActionState, useEffect, useRef, useState } from "react";
+import { addKra, deleteKra, updateKra, type ActionState } from "./actions";
 
 type Kra = { id: string; name: string; target: string; achieved: string; pct: number };
+
+function KraRow({ employeeId, kra }: { employeeId: string; kra: Kra }) {
+  const [editing, setEditing] = useState(false);
+  const [state, formAction, pending] = useActionState<ActionState, FormData>(
+    async (_prev, formData) => {
+      const result = await updateKra(formData);
+      if (!result?.error) setEditing(false);
+      return result;
+    },
+    undefined
+  );
+
+  if (editing) {
+    return (
+      <tr>
+        <td colSpan={5}>
+          <form action={formAction} className="flex gap8 wrap" style={{ padding: "6px 0" }}>
+            <input type="hidden" name="employee_id" value={employeeId} />
+            <input type="hidden" name="kra_id" value={kra.id} />
+            <input name="name" defaultValue={kra.name} required className="field" style={{ flex: 2, minWidth: 140 }} />
+            <input name="target" defaultValue={kra.target} required className="field" style={{ width: 130 }} />
+            <input name="achieved" defaultValue={kra.achieved} required className="field" style={{ width: 130 }} />
+            <input name="pct" type="number" min={0} max={100} defaultValue={kra.pct} required className="field" style={{ width: 110 }} />
+            <button type="submit" className="btn btn-primary btn-sm" disabled={pending}>
+              {pending ? "Saving…" : "Save"}
+            </button>
+            <button type="button" className="btn btn-outline btn-sm" onClick={() => setEditing(false)}>
+              Cancel
+            </button>
+            {state?.error && <span className="tiny" style={{ color: "var(--coral)" }}>{state.error}</span>}
+          </form>
+        </td>
+      </tr>
+    );
+  }
+
+  return (
+    <tr>
+      <td className="small">{kra.name}</td>
+      <td className="mono small">{kra.target}</td>
+      <td className="mono small">{kra.achieved}</td>
+      <td className="mono">{kra.pct}%</td>
+      <td>
+        <div className="flex gap6">
+          <button type="button" className="btn btn-outline btn-sm" onClick={() => setEditing(true)}>
+            Edit
+          </button>
+          <form
+            action={async (formData) => {
+              await deleteKra(formData);
+            }}
+          >
+            <input type="hidden" name="employee_id" value={employeeId} />
+            <input type="hidden" name="kra_id" value={kra.id} />
+            <button type="submit" className="btn btn-outline btn-sm">✕</button>
+          </form>
+        </div>
+      </td>
+    </tr>
+  );
+}
 
 export default function KraManager({ employeeId, kras }: { employeeId: string; kras: Kra[] }) {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(
@@ -31,23 +92,7 @@ export default function KraManager({ employeeId, kras }: { employeeId: string; k
         </thead>
         <tbody>
           {kras.map((k) => (
-            <tr key={k.id}>
-              <td className="small">{k.name}</td>
-              <td className="mono small">{k.target}</td>
-              <td className="mono small">{k.achieved}</td>
-              <td className="mono">{k.pct}%</td>
-              <td>
-                <form
-                  action={async (formData) => {
-                    await deleteKra(formData);
-                  }}
-                >
-                  <input type="hidden" name="employee_id" value={employeeId} />
-                  <input type="hidden" name="kra_id" value={k.id} />
-                  <button type="submit" className="btn btn-outline btn-sm">✕</button>
-                </form>
-              </td>
-            </tr>
+            <KraRow key={k.id} employeeId={employeeId} kra={k} />
           ))}
           {kras.length === 0 && (
             <tr>

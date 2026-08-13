@@ -1,16 +1,29 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+// Small, fixed weight — the quiz is a one-time result, not a recurring KPI.
+const QUIZ_SCORE_WEIGHT = 10;
+
 // Recomputes an employee's weighted overall score and current featured badge,
 // then writes both onto ts_employees and the public ts_leaderboard projection.
-// Called after any KPI or badge change so the leaderboard stays live.
+// Called after any KPI, task, badge, or quiz change so the leaderboard stays live.
 export async function syncEmployeeAggregates(admin: SupabaseClient, employeeId: string) {
-  const { data: kpis } = await admin
-    .from("ts_kpis")
-    .select("score, weight")
-    .eq("employee_id", employeeId);
+  const [{ data: kpis }, { data: tasks }, { data: quizAttempt }] = await Promise.all([
+    admin.from("ts_kpis").select("score, weight").eq("employee_id", employeeId),
+    admin
+      .from("ts_tasks")
+      .select("score, weight")
+      .eq("employee_id", employeeId)
+      .eq("status", "reviewed")
+      .not("score", "is", null),
+    admin.from("ts_quiz_attempts").select("score").eq("employee_id", employeeId).maybeSingle(),
+  ]);
 
-  const rows = (kpis ?? []) as { score: number; weight: number }[];
+  const rows = [
+    ...(kpis ?? []),
+    ...(tasks ?? []),
+    ...(quizAttempt ? [{ score: quizAttempt.score, weight: QUIZ_SCORE_WEIGHT }] : []),
+  ] as { score: number; weight: number }[];
   const totalWeight = rows.reduce((sum, k) => sum + k.weight, 0);
   const overallScore =
     totalWeight > 0 ? Math.round(rows.reduce((sum, k) => sum + k.score * k.weight, 0) / totalWeight) : 0;
@@ -29,8 +42,15 @@ export async function syncEmployeeAggregates(admin: SupabaseClient, employeeId: 
     .from("ts_employees")
     .update({ overall_score: overallScore, current_badge_id: badge?.badge_id ?? null })
     .eq("id", employeeId)
-    .select("full_name, department")
+    .select("full_name, department, role")
     .single();
+
+  // HR/admin accounts live in the same table as employees but shouldn't
+  // compete on the leaderboard or Employee of the Month.
+  if (employee?.role === "hr") {
+    await admin.from("ts_leaderboard").delete().eq("employee_id", employeeId);
+    return;
+  }
 
   await admin.from("ts_leaderboard").upsert({
     employee_id: employeeId,

@@ -1,25 +1,21 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getCurrentEmployee } from "@/lib/session";
-import { getLeaderboard } from "@/lib/leaderboard";
-import { createClient } from "@/lib/supabase/server";
+import { getEomTeaser, getEomHistory } from "@/lib/leaderboard";
 import { initials } from "@/lib/data";
 import Celebrate from "./Celebrate";
 
+export const metadata: Metadata = { title: "Employee of the Month" };
+
+// Motivational teaser page — deliberately never shows anyone's actual score,
+// just who's currently on top, so it's safe for every employee to visit.
+// Only /leaderboard (HR-only) lists everyone's numeric score.
 export default async function EomPage() {
   const employee = await getCurrentEmployee();
   if (!employee) redirect("/login");
 
-  const leaderboard = await getLeaderboard();
-  const topScorer = leaderboard[0];
+  const [topScorer, history] = await Promise.all([getEomTeaser(), getEomHistory()]);
 
-  const supabase = await createClient();
-  const { data: winners } = await supabase
-    .from("ts_eom_winners")
-    .select("*")
-    .order("month", { ascending: false })
-    .limit(5);
-
-  const history = winners ?? [];
   const pastWinners = history.slice(1, 5);
   const monthsOnTop = topScorer ? history.filter((w) => w.employee_id === topScorer.employee_id).length : 0;
 
@@ -58,7 +54,6 @@ export default async function EomPage() {
             <div>
               <span className="pill" style={{ background: "rgba(255,255,255,.2)", color: "#fff" }}>🏆 Employee of the Month</span>
               <div style={{ fontSize: 30, fontWeight: 800, marginTop: 10 }}>{topScorer.full_name}</div>
-              <div style={{ opacity: 0.85 }}>{topScorer.department ?? "—"}</div>
               {topScorer.badge_title && (
                 <div className="flex gap8 wrap" style={{ marginTop: 12 }}>
                   <span className="pill" style={{ background: "rgba(255,255,255,.18)", color: "#fff" }}>
@@ -69,10 +64,6 @@ export default async function EomPage() {
             </div>
           </div>
           <div className="flex gap16">
-            <div style={{ textAlign: "center" }}>
-              <div className="mono" style={{ fontSize: 28, fontWeight: 800 }}>{topScorer.overall_score}</div>
-              <div className="tiny" style={{ opacity: 0.8 }}>Overall score</div>
-            </div>
             <div style={{ textAlign: "center" }}>
               <div className="mono" style={{ fontSize: 28, fontWeight: 800 }}>#1</div>
               <div className="tiny" style={{ opacity: 0.8 }}>Company rank</div>

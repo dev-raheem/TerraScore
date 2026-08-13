@@ -1,6 +1,21 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import BarMini from "@/components/BarMini";
 import { categories } from "@/lib/data";
+import { getCurrentEmployee } from "@/lib/session";
+import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import Resources, { type CategoryDef, type Material } from "./Resources";
+
+export const metadata: Metadata = { title: "Learning & Development" };
+
+const resourceCategories: CategoryDef[] = [
+  { key: "video", label: "Videos", icon: "🎬" },
+  { key: "sop", label: "SOP Library", icon: "📋" },
+  { key: "pdf", label: "PDFs", icon: "📄" },
+  { key: "template", label: "Templates", icon: "🧩" },
+  { key: "policy", label: "Company Policies", icon: "🔒" },
+];
 
 const trainingCalendar: [string, string][] = [
   ["Aug 3", "Guest lecture: Negotiation tactics with Meena Advani"],
@@ -14,7 +29,37 @@ const featured: [string, string][] = [
   ["New", "Finance basics for non-finance roles"],
 ];
 
-export default function LearningPage() {
+export default async function LearningPage() {
+  const employee = await getCurrentEmployee();
+  const isHr = employee?.role === "hr";
+
+  const supabase = await createClient();
+  const { data: materialRows } = await supabase
+    .from("ts_learning_materials")
+    .select("id, category, title, description, external_url, storage_path")
+    .order("created_at", { ascending: false });
+
+  const admin = createAdminClient();
+  const resolved = await Promise.all(
+    (materialRows ?? []).map(async (row) => {
+      let url = row.external_url ?? "";
+      if (row.storage_path) {
+        const { data: signed } = await admin.storage
+          .from("learning-materials")
+          .createSignedUrl(row.storage_path, 600);
+        url = signed?.signedUrl ?? "";
+      }
+      return { row, url };
+    })
+  );
+
+  const materialsByCategory: Record<string, Material[]> = {};
+  for (const { row, url } of resolved) {
+    if (!url) continue;
+    const list = materialsByCategory[row.category] ?? (materialsByCategory[row.category] = []);
+    list.push({ id: row.id, category: row.category, title: row.title, description: row.description, url });
+  }
+
   return (
     <>
       <div className="page-head enter">
@@ -73,9 +118,8 @@ export default function LearningPage() {
         </div>
       </div>
 
-      <div className="card pad flex between center enter enter-d4">
-        <div className="small muted">Have training material to share?</div>
-        <button className="btn btn-outline btn-sm">📤 Upload material (Admin)</button>
+      <div className="enter enter-d4">
+        <Resources categories={resourceCategories} materialsByCategory={materialsByCategory} isHr={isHr} />
       </div>
     </>
   );

@@ -4,6 +4,7 @@ export type NavItem = {
   href: string;
   label: string;
   icon: IconName;
+  hrOnly?: boolean;
 };
 
 export type NavGroup = {
@@ -20,7 +21,7 @@ export const navGroups: NavGroup[] = [
     label: "Recognition",
     items: [
       { href: "/eom", label: "Employee of the Month", icon: "trophy" },
-      { href: "/leaderboard", label: "Leaderboard", icon: "list" },
+      { href: "/leaderboard", label: "Leaderboard", icon: "list", hrOnly: true },
       { href: "/badges", label: "Badges & Achievements", icon: "award" },
     ],
   },
@@ -28,6 +29,7 @@ export const navGroups: NavGroup[] = [
     label: "My Growth",
     items: [
       { href: "/performance", label: "My Performance", icon: "target" },
+      { href: "/tasks", label: "My Tasks", icon: "file" },
       { href: "/kpi", label: "KPI & KRA", icon: "bars" },
     ],
   },

@@ -1,7 +1,10 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import BarMini from "@/components/BarMini";
 import { getCurrentEmployee } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
+
+export const metadata: Metadata = { title: "KPIs & KRAs" };
 
 export default async function KpiPage() {
   const employee = await getCurrentEmployee();

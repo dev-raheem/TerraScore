@@ -4,11 +4,30 @@ import Link from "next/link";
 import ThemeToggle from "@/components/ThemeToggle";
 import { Icon } from "@/components/icons";
 import { initials } from "@/lib/data";
+import { useMobileNav } from "@/components/MobileNavContext";
 
-export default function Topbar({ name, subtitle }: { name: string; subtitle: string }) {
+export default function Topbar({
+  name,
+  subtitle,
+  unreadNotifications,
+}: {
+  name: string;
+  subtitle: string;
+  unreadNotifications: number;
+}) {
+  const { toggle } = useMobileNav();
+
   return (
     <div className="topbar">
       <div className="flex center gap12">
+        <button
+          type="button"
+          className="mobile-menu-btn"
+          onClick={toggle}
+          aria-label="Open menu"
+        >
+          <Icon name="menu" style={{ width: 20, height: 20 }} />
+        </button>
         <div
           className="avatar"
           style={{ width: 38, height: 38, background: "linear-gradient(135deg,var(--primary),var(--primary-2))" }}
@@ -24,18 +43,20 @@ export default function Topbar({ name, subtitle }: { name: string; subtitle: str
         <ThemeToggle />
         <Link href="/notifications" style={{ position: "relative" }}>
           <Icon name="bell" style={{ width: 20, height: 20, cursor: "pointer" }} />
-          <span
-            style={{
-              position: "absolute",
-              top: -4,
-              right: -4,
-              width: 8,
-              height: 8,
-              borderRadius: "50%",
-              background: "var(--coral)",
-            }}
-            className="pulse-dot"
-          />
+          {unreadNotifications > 0 && (
+            <span
+              style={{
+                position: "absolute",
+                top: -4,
+                right: -4,
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                background: "var(--coral)",
+              }}
+              className="pulse-dot"
+            />
+          )}
         </Link>
       </div>
     </div>

@@ -1,6 +1,9 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getCurrentEmployee } from "@/lib/session";
 import { signOut } from "@/lib/actions/auth";
+
+export const metadata: Metadata = { title: "Pending Approval" };
 
 export default async function PendingApprovalPage() {
   const employee = await getCurrentEmployee();

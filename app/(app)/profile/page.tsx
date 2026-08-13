@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Ring from "@/components/Ring";
 import { initials } from "@/lib/data";
 import { getCurrentEmployee } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
+
+export const metadata: Metadata = { title: "Profile" };
 
 export default async function ProfilePage() {
   const employee = await getCurrentEmployee();
@@ -51,7 +54,7 @@ export default async function ProfilePage() {
           </div>
         </div>
         <div className="card pad-lg flex col center" style={{ textAlign: "center" }}>
-          <Ring percent={employee.overall_score} size={110} strokeWidth={10} colors={["#043C40", "#0E6B73"]} center={employee.overall_score} />
+          <Ring percent={employee.overall_score} size={110} strokeWidth={10} center={employee.overall_score} />
           <div className="tiny muted" style={{ marginTop: 8 }}>Overall score</div>
         </div>
       </div>

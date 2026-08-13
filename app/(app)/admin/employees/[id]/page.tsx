@@ -1,10 +1,15 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { requireHr } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
 import KpiManager from "./KpiManager";
 import KraManager from "./KraManager";
+import TaskManager from "./TaskManager";
 import BadgeManager from "./BadgeManager";
 import SnapshotButton from "./SnapshotButton";
+import MonthlyScoreHistory from "./MonthlyScoreHistory";
+
+export const metadata: Metadata = { title: "Manage Employee" };
 
 export default async function EmployeeDetailPage({ params }: { params: Promise<{ id: string }> }) {
   await requireHr();
@@ -12,14 +17,23 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
 
   const supabase = await createClient();
 
-  const [{ data: employee }, { data: kpis }, { data: kras }, { data: badges }, { data: earnedBadges }] =
-    await Promise.all([
-      supabase.from("ts_employees").select("*").eq("id", id).single(),
-      supabase.from("ts_kpis").select("*").eq("employee_id", id).order("created_at"),
-      supabase.from("ts_kras").select("*").eq("employee_id", id).order("created_at"),
-      supabase.from("ts_badges").select("*").order("name"),
-      supabase.from("ts_employee_badges").select("badge_id").eq("employee_id", id),
-    ]);
+  const [
+    { data: employee },
+    { data: kpis },
+    { data: kras },
+    { data: tasks },
+    { data: badges },
+    { data: earnedBadges },
+    { data: monthlyScores },
+  ] = await Promise.all([
+    supabase.from("ts_employees").select("*").eq("id", id).single(),
+    supabase.from("ts_kpis").select("*").eq("employee_id", id).order("created_at"),
+    supabase.from("ts_kras").select("*").eq("employee_id", id).order("created_at"),
+    supabase.from("ts_tasks").select("*").eq("employee_id", id).order("created_at"),
+    supabase.from("ts_badges").select("*").order("name"),
+    supabase.from("ts_employee_badges").select("badge_id").eq("employee_id", id),
+    supabase.from("ts_monthly_scores").select("*").eq("employee_id", id).order("month", { ascending: false }),
+  ]);
 
   if (!employee) notFound();
 
@@ -44,6 +58,14 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
       <div className="grid g2 enter enter-d1" style={{ marginBottom: 18, alignItems: "start" }}>
         <KpiManager employeeId={id} kpis={kpis ?? []} />
         <KraManager employeeId={id} kras={kras ?? []} />
+      </div>
+
+      <div style={{ marginBottom: 18 }}>
+        <TaskManager employeeId={id} tasks={tasks ?? []} />
+      </div>
+
+      <div style={{ marginBottom: 18 }}>
+        <MonthlyScoreHistory employeeId={id} history={monthlyScores ?? []} />
       </div>
 
       <BadgeManager employeeId={id} badges={badges ?? []} earnedBadgeIds={earnedBadgeIds} />

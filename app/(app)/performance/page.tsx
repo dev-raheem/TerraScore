@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Ring from "@/components/Ring";
 import LineChart from "@/components/LineChart";
@@ -5,6 +6,8 @@ import BarMini from "@/components/BarMini";
 import { getCurrentEmployee } from "@/lib/session";
 import { getLeaderboard } from "@/lib/leaderboard";
 import { createClient } from "@/lib/supabase/server";
+
+export const metadata: Metadata = { title: "Performance" };
 
 export default async function PerformancePage() {
   const employee = await getCurrentEmployee();
@@ -56,7 +59,7 @@ export default async function PerformancePage() {
           )}
         </div>
         <div className="card pad-lg flex col center" style={{ textAlign: "center" }}>
-          <Ring percent={employee.overall_score} size={140} strokeWidth={12} colors={["#043C40", "#0E6B73"]} center={employee.overall_score} sub="Overall score" />
+          <Ring percent={employee.overall_score} size={140} strokeWidth={12} center={employee.overall_score} sub="Overall score" />
           <div className="flex gap16" style={{ marginTop: 16 }}>
             <div>
               <div className="mono bold">{companyRank > 0 ? `#${companyRank}` : "—"}</div>
@@ -74,7 +77,7 @@ export default async function PerformancePage() {
         <div className="grid g5 enter enter-d2" style={{ marginBottom: 18 }}>
           {kpiList.slice(0, 5).map((k) => (
             <div key={k.id} className="card pad flex col center gap6" style={{ textAlign: "center" }}>
-              <Ring percent={k.score} size={86} strokeWidth={8} colors={["#043C40", "#0E6B73"]} center={k.score} />
+              <Ring percent={k.score} size={86} strokeWidth={8} center={k.score} />
               <div className="tiny muted bold" style={{ marginTop: 2 }}>{k.name}</div>
             </div>
           ))}

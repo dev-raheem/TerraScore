@@ -22,8 +22,15 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TerraScore — Employee Performance & Growth Portal",
+  title: {
+    default: "TerraScore — Employee Performance & Growth Portal",
+    template: "%s | TerraScore",
+  },
   description: "Employee performance, recognition and growth portal",
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 const noFlashThemeScript = `

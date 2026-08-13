@@ -1,9 +1,68 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
-import { addKpi, deleteKpi, type ActionState } from "./actions";
+import { useActionState, useEffect, useRef, useState } from "react";
+import { addKpi, deleteKpi, updateKpi, type ActionState } from "./actions";
 
 type Kpi = { id: string; name: string; score: number; weight: number };
+
+function KpiRow({ employeeId, kpi }: { employeeId: string; kpi: Kpi }) {
+  const [editing, setEditing] = useState(false);
+  const [state, formAction, pending] = useActionState<ActionState, FormData>(
+    async (_prev, formData) => {
+      const result = await updateKpi(formData);
+      if (!result?.error) setEditing(false);
+      return result;
+    },
+    undefined
+  );
+
+  if (editing) {
+    return (
+      <tr>
+        <td colSpan={4}>
+          <form action={formAction} className="flex gap8 wrap" style={{ padding: "6px 0" }}>
+            <input type="hidden" name="employee_id" value={employeeId} />
+            <input type="hidden" name="kpi_id" value={kpi.id} />
+            <input name="name" defaultValue={kpi.name} required className="field" style={{ flex: 2, minWidth: 140 }} />
+            <input name="score" type="number" min={0} max={100} defaultValue={kpi.score} required className="field" style={{ width: 90 }} />
+            <input name="weight" type="number" min={0} max={100} defaultValue={kpi.weight} required className="field" style={{ width: 100 }} />
+            <button type="submit" className="btn btn-primary btn-sm" disabled={pending}>
+              {pending ? "Saving…" : "Save"}
+            </button>
+            <button type="button" className="btn btn-outline btn-sm" onClick={() => setEditing(false)}>
+              Cancel
+            </button>
+            {state?.error && <span className="tiny" style={{ color: "var(--coral)" }}>{state.error}</span>}
+          </form>
+        </td>
+      </tr>
+    );
+  }
+
+  return (
+    <tr>
+      <td className="small">{kpi.name}</td>
+      <td className="mono">{kpi.score}</td>
+      <td className="mono">{kpi.weight}%</td>
+      <td>
+        <div className="flex gap6">
+          <button type="button" className="btn btn-outline btn-sm" onClick={() => setEditing(true)}>
+            Edit
+          </button>
+          <form
+            action={async (formData) => {
+              await deleteKpi(formData);
+            }}
+          >
+            <input type="hidden" name="employee_id" value={employeeId} />
+            <input type="hidden" name="kpi_id" value={kpi.id} />
+            <button type="submit" className="btn btn-outline btn-sm">✕</button>
+          </form>
+        </div>
+      </td>
+    </tr>
+  );
+}
 
 export default function KpiManager({ employeeId, kpis }: { employeeId: string; kpis: Kpi[] }) {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(
@@ -32,22 +91,7 @@ export default function KpiManager({ employeeId, kpis }: { employeeId: string; k
         </thead>
         <tbody>
           {kpis.map((k) => (
-            <tr key={k.id}>
-              <td className="small">{k.name}</td>
-              <td className="mono">{k.score}</td>
-              <td className="mono">{k.weight}%</td>
-              <td>
-                <form
-                  action={async (formData) => {
-                    await deleteKpi(formData);
-                  }}
-                >
-                  <input type="hidden" name="employee_id" value={employeeId} />
-                  <input type="hidden" name="kpi_id" value={k.id} />
-                  <button type="submit" className="btn btn-outline btn-sm">✕</button>
-                </form>
-              </td>
-            </tr>
+            <KpiRow key={k.id} employeeId={employeeId} kpi={k} />
           ))}
           {kpis.length === 0 && (
             <tr>

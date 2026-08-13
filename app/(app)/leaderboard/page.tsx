@@ -1,12 +1,15 @@
-import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import BarMini from "@/components/BarMini";
-import { getCurrentEmployee } from "@/lib/session";
+import { requireHr } from "@/lib/session";
 import { getLeaderboard } from "@/lib/leaderboard";
 import { initials } from "@/lib/data";
 
+export const metadata: Metadata = { title: "Leaderboard" };
+
+// HR-only: this is the one place every employee's actual score is listed
+// side by side, so it's gated the same way as /admin.
 export default async function LeaderboardPage() {
-  const employee = await getCurrentEmployee();
-  if (!employee) redirect("/login");
+  const employee = await requireHr();
 
   const leaderboard = await getLeaderboard();
   const top3 = leaderboard.slice(0, 3);

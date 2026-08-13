@@ -16,6 +16,9 @@ function revalidateEmployee(employeeId: string) {
   revalidatePath("/performance");
   revalidatePath("/profile");
   revalidatePath("/eom");
+  revalidatePath("/tasks");
+  revalidatePath("/quiz");
+  revalidatePath("/learning");
 }
 
 export async function addKpi(formData: FormData): Promise<ActionState> {
@@ -39,6 +42,37 @@ export async function addKpi(formData: FormData): Promise<ActionState> {
 
   const admin = createAdminClient();
   const { error } = await admin.from("ts_kpis").insert({ employee_id: employeeId, name, score, weight });
+  if (error) return { error: error.message };
+
+  await syncEmployeeAggregates(admin, employeeId);
+  revalidateEmployee(employeeId);
+}
+
+export async function updateKpi(formData: FormData): Promise<ActionState> {
+  try {
+    await assertHr();
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Not authorized." };
+  }
+
+  const employeeId = String(formData.get("employee_id") || "");
+  const kpiId = String(formData.get("kpi_id") || "");
+  const name = String(formData.get("name") || "").trim();
+  const score = Number(formData.get("score"));
+  const weight = Number(formData.get("weight"));
+
+  if (!employeeId || !kpiId || !name || Number.isNaN(score) || Number.isNaN(weight)) {
+    return { error: "Fill in KPI name, score, and weight." };
+  }
+  if (score < 0 || score > 100 || weight < 0 || weight > 100) {
+    return { error: "Score and weight must be between 0 and 100." };
+  }
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("ts_kpis")
+    .update({ name, score, weight, updated_at: new Date().toISOString() })
+    .eq("id", kpiId);
   if (error) return { error: error.message };
 
   await syncEmployeeAggregates(admin, employeeId);
@@ -86,6 +120,37 @@ export async function addKra(formData: FormData): Promise<ActionState> {
 
   const admin = createAdminClient();
   const { error } = await admin.from("ts_kras").insert({ employee_id: employeeId, name, target, achieved, pct });
+  if (error) return { error: error.message };
+
+  revalidateEmployee(employeeId);
+}
+
+export async function updateKra(formData: FormData): Promise<ActionState> {
+  try {
+    await assertHr();
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Not authorized." };
+  }
+
+  const employeeId = String(formData.get("employee_id") || "");
+  const kraId = String(formData.get("kra_id") || "");
+  const name = String(formData.get("name") || "").trim();
+  const target = String(formData.get("target") || "").trim();
+  const achieved = String(formData.get("achieved") || "").trim();
+  const pct = Number(formData.get("pct"));
+
+  if (!employeeId || !kraId || !name || !target || !achieved || Number.isNaN(pct)) {
+    return { error: "Fill in all KRA fields." };
+  }
+  if (pct < 0 || pct > 100) {
+    return { error: "Completion % must be between 0 and 100." };
+  }
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("ts_kras")
+    .update({ name, target, achieved, pct, updated_at: new Date().toISOString() })
+    .eq("id", kraId);
   if (error) return { error: error.message };
 
   revalidateEmployee(employeeId);
@@ -200,4 +265,148 @@ export async function recordMonthlySnapshot(formData: FormData): Promise<ActionS
 
   revalidateEmployee(employeeId);
   revalidatePath("/eom");
+}
+
+export async function deleteMonthlySnapshot(formData: FormData): Promise<ActionState> {
+  try {
+    await assertHr();
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Not authorized." };
+  }
+
+  const employeeId = String(formData.get("employee_id") || "");
+  const snapshotId = String(formData.get("snapshot_id") || "");
+  if (!employeeId || !snapshotId) return { error: "Missing snapshot." };
+
+  const admin = createAdminClient();
+  const { error } = await admin.from("ts_monthly_scores").delete().eq("id", snapshotId);
+  if (error) return { error: error.message };
+
+  revalidateEmployee(employeeId);
+}
+
+export async function addTask(formData: FormData): Promise<ActionState> {
+  let hrId: string;
+  try {
+    hrId = await assertHr();
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Not authorized." };
+  }
+
+  const employeeId = String(formData.get("employee_id") || "");
+  const title = String(formData.get("title") || "").trim();
+  const description = String(formData.get("description") || "").trim();
+  const weight = Number(formData.get("weight"));
+  const dueDate = String(formData.get("due_date") || "").trim();
+
+  if (!employeeId || !title || Number.isNaN(weight)) {
+    return { error: "Fill in task title and weight." };
+  }
+  if (weight < 0 || weight > 100) {
+    return { error: "Weight must be between 0 and 100." };
+  }
+
+  const admin = createAdminClient();
+  const { error } = await admin.from("ts_tasks").insert({
+    employee_id: employeeId,
+    assigned_by: hrId,
+    title,
+    description: description || null,
+    weight,
+    due_date: dueDate || null,
+  });
+  if (error) return { error: error.message };
+
+  revalidateEmployee(employeeId);
+}
+
+export async function updateTask(formData: FormData): Promise<ActionState> {
+  try {
+    await assertHr();
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Not authorized." };
+  }
+
+  const employeeId = String(formData.get("employee_id") || "");
+  const taskId = String(formData.get("task_id") || "");
+  const title = String(formData.get("title") || "").trim();
+  const description = String(formData.get("description") || "").trim();
+  const weight = Number(formData.get("weight"));
+  const dueDate = String(formData.get("due_date") || "").trim();
+
+  if (!employeeId || !taskId || !title || Number.isNaN(weight)) {
+    return { error: "Fill in task title and weight." };
+  }
+  if (weight < 0 || weight > 100) {
+    return { error: "Weight must be between 0 and 100." };
+  }
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("ts_tasks")
+    .update({
+      title,
+      description: description || null,
+      weight,
+      due_date: dueDate || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", taskId);
+  if (error) return { error: error.message };
+
+  await syncEmployeeAggregates(admin, employeeId);
+  revalidateEmployee(employeeId);
+}
+
+export async function deleteTask(formData: FormData): Promise<ActionState> {
+  try {
+    await assertHr();
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Not authorized." };
+  }
+
+  const employeeId = String(formData.get("employee_id") || "");
+  const taskId = String(formData.get("task_id") || "");
+  if (!employeeId || !taskId) return { error: "Missing task." };
+
+  const admin = createAdminClient();
+  const { error } = await admin.from("ts_tasks").delete().eq("id", taskId);
+  if (error) return { error: error.message };
+
+  await syncEmployeeAggregates(admin, employeeId);
+  revalidateEmployee(employeeId);
+}
+
+export async function reviewTask(formData: FormData): Promise<ActionState> {
+  try {
+    await assertHr();
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Not authorized." };
+  }
+
+  const employeeId = String(formData.get("employee_id") || "");
+  const taskId = String(formData.get("task_id") || "");
+  const score = Number(formData.get("score"));
+
+  if (!employeeId || !taskId || Number.isNaN(score)) {
+    return { error: "Enter a score to review this task." };
+  }
+  if (score < 0 || score > 100) {
+    return { error: "Score must be between 0 and 100." };
+  }
+
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("ts_tasks")
+    .update({ score, status: "reviewed", updated_at: new Date().toISOString() })
+    .eq("id", taskId)
+    .eq("status", "completed")
+    .select("id");
+  if (error) return { error: error.message };
+  if (!data || data.length === 0) {
+    return { error: "This task was already reviewed or its status changed — refresh and try again." };
+  }
+
+  await syncEmployeeAggregates(admin, employeeId);
+  revalidateEmployee(employeeId);
 }

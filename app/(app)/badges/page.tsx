@@ -1,11 +1,16 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getCurrentEmployee } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
+import BadgeCatalogManager from "./BadgeCatalogManager";
+
+export const metadata: Metadata = { title: "Badges" };
 
 export default async function BadgesPage() {
   const employee = await getCurrentEmployee();
   if (!employee) redirect("/login");
 
+  const isHr = employee.role === "hr";
   const supabase = await createClient();
   const [{ data: badges }, { data: earned }] = await Promise.all([
     supabase.from("ts_badges").select("*").order("name"),
@@ -60,6 +65,7 @@ export default async function BadgesPage() {
           );
         })}
       </div>
+      {isHr && <BadgeCatalogManager badges={badgeList} />}
     </>
   );
 }

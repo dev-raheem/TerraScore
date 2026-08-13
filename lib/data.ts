@@ -11,23 +11,6 @@ export const categories: Category[] = [
   { name: "Leadership", courses: 10, progress: 55, icon: "🧑‍💼", color: "#189267" },
 ];
 
-export type NotificationType = "gold" | "emerald" | "primary" | "sky" | "coral";
-
-export type NotificationItem = {
-  icon: string;
-  title: string;
-  time: string;
-  type: NotificationType;
-};
-
-export const notifications: NotificationItem[] = [
-  { icon: "🏅", title: "New badge unlocked — Team Player", time: "2h ago", type: "gold" },
-  { icon: "📈", title: "You moved up to Rank #4 this week", time: "5h ago", type: "emerald" },
-  { icon: "🧠", title: "Weekly quiz closes in 18 hours", time: "1d ago", type: "primary" },
-  { icon: "💬", title: "Manager left feedback on your July report", time: "2d ago", type: "sky" },
-  { icon: "🏆", title: "Priyanka Sharma is July's Employee of the Month", time: "3d ago", type: "gold" },
-];
-
 export function initials(n: string) {
   return n.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
 }

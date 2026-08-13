@@ -6,12 +6,23 @@ type RingProps = {
   percent: number;
   size: number;
   strokeWidth: number;
-  colors: [string, string];
+  // Defaults to the theme's brand gradient, which flips light/dark via
+  // CSS vars automatically — only pass an explicit pair to deviate from it
+  // (e.g. the quiz page's gold ring), or dark mode's ring color won't match
+  // the rest of the themed UI.
+  colors?: [string, string];
   center: string | number;
   sub?: string;
 };
 
-export default function Ring({ percent, size, strokeWidth, colors, center, sub }: RingProps) {
+export default function Ring({
+  percent,
+  size,
+  strokeWidth,
+  colors = ["var(--primary)", "var(--primary-2)"],
+  center,
+  sub,
+}: RingProps) {
   const gradId = useId();
   const r = (size - strokeWidth) / 2;
   const c = 2 * Math.PI * r;
