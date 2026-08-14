@@ -18,6 +18,8 @@ export type Employee = {
   status: "pending" | "active";
   overall_score: number;
   current_badge_id: string | null;
+  office_id: string | null;
+  location_tracking_consent_at: string | null;
 };
 
 export const getCurrentEmployee = cache(async (): Promise<Employee | null> => {

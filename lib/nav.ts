@@ -34,6 +34,10 @@ export const navGroups: NavGroup[] = [
     ],
   },
   {
+    label: "Attendance",
+    items: [{ href: "/attendance", label: "My Attendance", icon: "clock" }],
+  },
+  {
     label: "Learning",
     items: [
       { href: "/learning", label: "Learning & Development", icon: "book" },
@@ -49,6 +53,11 @@ export const navGroups: NavGroup[] = [
   },
   {
     label: "Admin",
-    items: [{ href: "/admin", label: "HR Admin", icon: "shield" }],
+    items: [
+      { href: "/admin", label: "HR Admin", icon: "shield" },
+      { href: "/admin/live-tracking", label: "Live Tracking", icon: "map", hrOnly: true },
+      { href: "/admin/offices", label: "Offices", icon: "building", hrOnly: true },
+      { href: "/admin/corrections", label: "Corrections", icon: "file", hrOnly: true },
+    ],
   },
 ];

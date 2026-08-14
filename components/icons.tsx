@@ -1,7 +1,7 @@
 export type IconName =
   | "grid" | "trophy" | "list" | "award" | "target" | "bars" | "file"
   | "clock" | "book" | "quiz" | "user" | "bell" | "shield" | "logout"
-  | "dots" | "x" | "menu" | "alert";
+  | "dots" | "x" | "menu" | "alert" | "map" | "pin" | "building";
 
 const paths: Record<IconName, React.ReactNode> = {
   grid: (
@@ -96,6 +96,25 @@ const paths: Record<IconName, React.ReactNode> = {
     <>
       <path d="M12 9v4M12 17h.01" />
       <path d="m10.29 3.86-8.11 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.82-3.14l-8.11-14a2 2 0 0 0-3.42 0Z" />
+    </>
+  ),
+  map: (
+    <>
+      <path d="M9 18 3 21V6l6-3 6 3 6-3v15l-6 3-6-3Z" />
+      <path d="M9 3v15M15 6v15" />
+    </>
+  ),
+  pin: (
+    <>
+      <path d="M12 22s7-6.6 7-12A7 7 0 0 0 5 10c0 5.4 7 12 7 12Z" />
+      <circle cx="12" cy="10" r="2.4" />
+    </>
+  ),
+  building: (
+    <>
+      <path d="M4 21V4a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v17" />
+      <path d="M19 21V10a1 1 0 0 0-1-1h-3" />
+      <path d="M8 7h.01M8 11h.01M8 15h.01M12 7h.01M12 11h.01M12 15h.01" />
     </>
   ),
 };

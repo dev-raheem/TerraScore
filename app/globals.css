@@ -144,6 +144,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .pill-primary{background:var(--primary-soft);color:var(--primary);}
 [data-theme="dark"] .pill-primary{color:#E7C892;}
 .pill-sky{background:var(--sky-soft);color:var(--sky);}
+.pill-muted{background:var(--border);color:var(--ink-soft);}
 .divider{height:1px;background:var(--border);margin:16px 0;}
 .avatar{border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-family:var(--font-geist);flex-shrink:0;}
 .progress-track{height:8px;border-radius:8px;background:var(--primary-soft);overflow:hidden;}

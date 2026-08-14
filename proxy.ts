@@ -45,5 +45,9 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|brand/).*)"],
+  // /api is excluded — Vercel Cron hits /api/cron/* with no Supabase session
+  // cookie at all, so gating it here would redirect every cron ping to
+  // /login before the route handler's own CRON_SECRET check ever runs.
+  // Route handlers under /api are responsible for their own authorization.
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|brand/|api/).*)"],
 };

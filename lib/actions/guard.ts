@@ -15,3 +15,16 @@ export async function assertHr(): Promise<string> {
 
   return user.id;
 }
+
+// For self-service actions (clock in/out, location pings, correction
+// requests): the employee id always comes from the session, never from
+// client-supplied form data, so there's no separate "self or HR" check to
+// get wrong — the action can only ever act on the caller's own row.
+export async function requireEmployeeId(): Promise<string> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated.");
+  return user.id;
+}
