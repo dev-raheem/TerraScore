@@ -9,7 +9,14 @@ import {
   getOwnCurrentLocation,
   getTodayAttendance,
 } from "@/lib/attendance";
-import { computeWorkingSeconds, derivePresenceStatus, formatDistance, formatDuration, formatTimeAgo } from "@/lib/geofence";
+import {
+  computeWorkingSeconds,
+  derivePresenceStatus,
+  formatDistance,
+  formatDuration,
+  formatTimeAgo,
+  formatTimeInZone,
+} from "@/lib/geofence";
 import { AttendancePill, PresencePill } from "@/components/attendance/StatusPill";
 import ClockButton from "./ClockButton";
 import ConsentPrompt from "./ConsentPrompt";
@@ -32,6 +39,7 @@ export default async function AttendancePage() {
   ]);
 
   const office = offices.find((o) => o.id === employee.office_id) ?? null;
+  const timezone = office?.timezone ?? "Asia/Kolkata";
   const hasConsent = Boolean(employee.location_tracking_consent_at);
   const isActiveSession = Boolean(today?.clock_in_at && !today?.clock_out_at);
   const presenceStatus = derivePresenceStatus(
@@ -80,11 +88,11 @@ export default async function AttendancePage() {
         <div className="grid g4" style={{ gap: 12 }}>
           <div>
             <div className="tiny muted">Clock in</div>
-            <div className="bold">{today?.clock_in_at ? new Date(today.clock_in_at).toLocaleTimeString() : "—"}</div>
+            <div className="bold">{formatTimeInZone(today?.clock_in_at ?? null, timezone)}</div>
           </div>
           <div>
             <div className="tiny muted">Clock out</div>
-            <div className="bold">{today?.clock_out_at ? new Date(today.clock_out_at).toLocaleTimeString() : "—"}</div>
+            <div className="bold">{formatTimeInZone(today?.clock_out_at ?? null, timezone)}</div>
           </div>
           <div>
             <div className="tiny muted">Working time</div>
@@ -98,7 +106,7 @@ export default async function AttendancePage() {
 
         {isActiveSession && hasConsent && (
           <div className="tiny muted" style={{ marginTop: 12 }}>
-            Last location update: {formatTimeAgo(currentLocation?.updated_at ?? null)}
+            Last location update: {formatTimeAgo(currentLocation?.updated_at ?? null, timezone)}
           </div>
         )}
       </div>
@@ -128,8 +136,8 @@ export default async function AttendancePage() {
                 <td>
                   <AttendancePill status={row.status} />
                 </td>
-                <td>{row.clock_in_at ? new Date(row.clock_in_at).toLocaleTimeString() : "—"}</td>
-                <td>{row.clock_out_at ? new Date(row.clock_out_at).toLocaleTimeString() : "—"}</td>
+                <td>{formatTimeInZone(row.clock_in_at, timezone)}</td>
+                <td>{formatTimeInZone(row.clock_out_at, timezone)}</td>
                 <td>{formatDuration(row.total_working_seconds)}</td>
               </tr>
             ))}

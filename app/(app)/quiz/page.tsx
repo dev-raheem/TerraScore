@@ -12,6 +12,15 @@ export const metadata: Metadata = { title: "Quiz" };
 
 const QUESTIONS_PER_ATTEMPT = 10;
 
+function shuffled<T>(items: T[]): T[] {
+  const result = [...items];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
 export default async function QuizPage() {
   const employee = await getCurrentEmployee();
   if (!employee) redirect("/login");
@@ -55,11 +64,7 @@ export default async function QuizPage() {
       .from("ts_quiz_questions")
       .select("id, question, option_a, option_b, option_c, option_d")
       .eq("is_active", true);
-    const active = data ?? [];
-    for (let i = active.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [active[i], active[j]] = [active[j], active[i]];
-    }
+    const active = shuffled(data ?? []);
     quizQuestions = active.slice(0, Math.min(QUESTIONS_PER_ATTEMPT, active.length));
   }
 

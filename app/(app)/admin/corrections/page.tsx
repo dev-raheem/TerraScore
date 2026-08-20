@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { requireHr } from "@/lib/session";
 import { getPendingCorrections } from "@/lib/attendance";
+import { formatDateTimeInZone } from "@/lib/geofence";
 import CorrectionDecisionForm from "@/components/attendance/CorrectionDecisionForm";
 
 export const metadata: Metadata = { title: "Corrections" };
@@ -37,8 +38,8 @@ export default async function AdminCorrectionsPage() {
               {request.comment && <div className="tiny muted">Comment: {request.comment}</div>}
               {(request.requested_clock_in_at || request.requested_clock_out_at) && (
                 <div className="tiny muted">
-                  Requested: {request.requested_clock_in_at ? new Date(request.requested_clock_in_at).toLocaleString() : "—"} →{" "}
-                  {request.requested_clock_out_at ? new Date(request.requested_clock_out_at).toLocaleString() : "—"}
+                  Requested: {formatDateTimeInZone(request.requested_clock_in_at, "Asia/Kolkata")} →{" "}
+                  {formatDateTimeInZone(request.requested_clock_out_at, "Asia/Kolkata")}
                 </div>
               )}
               <CorrectionDecisionForm requestId={request.id} />

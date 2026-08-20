@@ -115,6 +115,40 @@ export function formatDistance(meters: number | null): string {
   return `${(meters / 1000).toFixed(1)} km`;
 }
 
+// These pages render on the server, where the process timezone is whatever
+// the host (Vercel = UTC) uses — never the visitor's. Plain toLocaleTimeString()
+// there silently shows UTC instead of the employee's local time, so every
+// server-rendered clock/date must go through one of these instead.
+export function formatTimeInZone(iso: string | null, timezone: string): string {
+  if (!iso) return "—";
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  }).format(new Date(iso));
+}
+
+export function formatDateTimeInZone(iso: string | null, timezone: string): string {
+  if (!iso) return "—";
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(new Date(iso));
+}
+
+function formatDateInZone(iso: string, timezone: string): string {
+  return new Intl.DateTimeFormat("en-US", { timeZone: timezone, year: "numeric", month: "numeric", day: "numeric" }).format(
+    new Date(iso)
+  );
+}
+
 // Staleness is relative to "now", so it's derived at read time rather than
 // stored — shared by the admin live-locations feed and an employee's own
 // current-location view so the two never disagree on what counts as stale.
@@ -128,12 +162,12 @@ export function derivePresenceStatus(
   return isStale ? "LOCATION_STALE" : rawStatus;
 }
 
-export function formatTimeAgo(iso: string | null): string {
+export function formatTimeAgo(iso: string | null, timezone: string = "Asia/Kolkata"): string {
   if (!iso) return "—";
   const minutes = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
   if (minutes < 1) return "just now";
   if (minutes < 60) return `${minutes}m ago`;
   const hours = Math.round(minutes / 60);
   if (hours < 24) return `${hours}h ago`;
-  return new Date(iso).toLocaleDateString();
+  return formatDateInZone(iso, timezone);
 }

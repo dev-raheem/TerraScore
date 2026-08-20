@@ -14,9 +14,11 @@ import { getEmployeeAttendanceEvents, getEmployeeCurrentLocation, getEmployeeLoc
 import {
   computeWorkingSeconds,
   derivePresenceStatus,
+  formatDateTimeInZone,
   formatDistance,
   formatDuration,
   formatTimeAgo,
+  formatTimeInZone,
   sumOutOfOfficeSeconds,
 } from "@/lib/geofence";
 import { AttendancePill, PresencePill } from "@/components/attendance/StatusPill";
@@ -59,6 +61,7 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
   ]);
 
   const office = offices.find((o) => o.id === employee.office_id) ?? null;
+  const timezone = office?.timezone ?? "Asia/Kolkata";
   const today = attendanceHistory[0] ?? null;
   const isActiveSession = Boolean(today?.clock_in_at && !today?.clock_out_at);
   const presenceStatus = derivePresenceStatus(
@@ -105,7 +108,7 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
         <div className="grid g4" style={{ gap: 12, marginBottom: 14 }}>
           <div>
             <div className="tiny muted">Clock in</div>
-            <div className="bold">{today?.clock_in_at ? new Date(today.clock_in_at).toLocaleTimeString() : "—"}</div>
+            <div className="bold">{formatTimeInZone(today?.clock_in_at ?? null, timezone)}</div>
           </div>
           <div>
             <div className="tiny muted">Working time</div>
@@ -122,7 +125,7 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
         </div>
 
         <div className="tiny muted" style={{ marginBottom: 14 }}>
-          Last location update: {formatTimeAgo(currentLocation?.updated_at ?? null)}
+          Last location update: {formatTimeAgo(currentLocation?.updated_at ?? null, timezone)}
           {currentLocation?.accuracy != null ? ` · GPS accuracy ${Math.round(currentLocation.accuracy)}m` : ""}
         </div>
 
@@ -141,7 +144,7 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
           {timeline.map((event) => (
             <div key={event.id} className="flex gap10 center">
               <span className="mono tiny muted" style={{ minWidth: 70 }}>
-                {new Date(event.occurred_at).toLocaleTimeString()}
+                {formatTimeInZone(event.occurred_at, timezone)}
               </span>
               <span className="small">{EVENT_LABELS[event.event_type] ?? event.event_type}</span>
             </div>
@@ -167,7 +170,7 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
             <div className="flex col gap8">
               {locationHistory.map((point) => (
                 <div key={point.id} className="card-flat pad">
-                  <div className="tiny bold">{new Date(point.server_received_at).toLocaleString()}</div>
+                  <div className="tiny bold">{formatDateTimeInZone(point.server_received_at, timezone)}</div>
                   <div className="tiny muted">
                     {formatDistance(point.distance_meters)} from office · {point.presence_status.replaceAll("_", " ")}
                   </div>
@@ -198,8 +201,8 @@ export default async function EmployeeDetailPage({ params }: { params: Promise<{
                 <td>
                   <AttendancePill status={row.status} />
                 </td>
-                <td>{row.clock_in_at ? new Date(row.clock_in_at).toLocaleTimeString() : "—"}</td>
-                <td>{row.clock_out_at ? new Date(row.clock_out_at).toLocaleTimeString() : "—"}</td>
+                <td>{formatTimeInZone(row.clock_in_at, timezone)}</td>
+                <td>{formatTimeInZone(row.clock_out_at, timezone)}</td>
                 <td>{formatDuration(row.total_working_seconds)}</td>
                 <td>{formatDuration(row.total_out_of_office_seconds)}</td>
               </tr>

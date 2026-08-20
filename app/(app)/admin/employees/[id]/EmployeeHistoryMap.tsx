@@ -1,6 +1,7 @@
 "use client";
 
 import "leaflet/dist/leaflet.css";
+import "@/lib/leafletZoomFix";
 import { MapContainer, TileLayer, Marker, Popup, Circle, Polyline } from "react-leaflet";
 import { formatDistance } from "@/lib/geofence";
 import type { LocationHistoryPoint } from "@/lib/location";

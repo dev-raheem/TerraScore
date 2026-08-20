@@ -1,7 +1,8 @@
 "use client";
 
 import "leaflet/dist/leaflet.css";
-import { Fragment, useEffect } from "react";
+import "@/lib/leafletZoomFix";
+import { Fragment, useEffect, useRef } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from "react-leaflet";
 import { presenceIcon, officeIcon } from "./markerIcons";
 import { AttendancePill, PresencePill } from "@/components/attendance/StatusPill";
@@ -13,10 +14,18 @@ const FALLBACK_CENTER: [number, number] = [25.3176, 82.9739];
 
 function FlyToEmployee({ employee }: { employee: LiveEmployeeLocation | null }) {
   const map = useMap();
+  // `employee` is a fresh object every poll (new array from the server
+  // action) even when nothing changed, so keying off identity alone would
+  // re-fly to the same spot every 20s. Only fly when the *selection* changes.
+  const lastFlownId = useRef<string | null>(null);
   useEffect(() => {
-    if (employee?.latitude != null && employee.longitude != null) {
-      map.flyTo([employee.latitude, employee.longitude], 15, { duration: 0.6 });
+    if (employee?.latitude == null || employee.longitude == null) {
+      lastFlownId.current = null;
+      return;
     }
+    if (lastFlownId.current === employee.employee_id) return;
+    lastFlownId.current = employee.employee_id;
+    map.flyTo([employee.latitude, employee.longitude], 15, { duration: 0.6 });
   }, [employee, map]);
   return null;
 }
